@@ -1,8 +1,7 @@
-using System;
 using Events;
 using UnityEngine;
 
-namespace Car
+namespace Car.OldCarScripts
 {
     public class CarInteractionController : MonoBehaviour
     {
