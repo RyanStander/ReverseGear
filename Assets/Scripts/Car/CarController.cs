@@ -8,31 +8,46 @@ namespace Car
     {
         [SerializeField] private float maxAcceleration = 30f;
         [SerializeField] private float speedMultiplier = 500f;
-        [SerializeField] private float brakeAcceleration = 50f;
         [SerializeField] private List<Wheel> wheels;
+        
+        [SerializeField] private float steerSensitivity = 1f;
+        [SerializeField] private float maxSteeringAngle = 30f;
 
+        [SerializeField] private float brakeAcceleration = 50f;
+        [SerializeField] private float brakeMultiplier = 300;
+
+        [SerializeField] private Vector3 centerOfMass;
         [SerializeField] private Rigidbody carRigidbody;
+        
         private float moveInput;
-
+        private float steerInput;
+        
         private void OnValidate()
         {
             if(carRigidbody == null)
                 carRigidbody = GetComponent<Rigidbody>();
+            
+            if (carRigidbody != null)
+                carRigidbody.centerOfMass = centerOfMass;
         }
 
         private void Update()
         {
             GetInputs();
+            AnimateWheels();
         }
 
         private void LateUpdate()
         {
             Move();
+            Steer();
+            Brake();
         }
 
         private void GetInputs()
         {
             moveInput = Input.GetAxis("Vertical");
+            steerInput = Input.GetAxis("Horizontal");
         }
 
         private void Move()
@@ -40,6 +55,46 @@ namespace Car
             foreach (Wheel wheel in wheels)
             {
                 wheel.WheelCollider.motorTorque = moveInput * maxAcceleration * speedMultiplier * Time.deltaTime;
+            }
+        }
+
+        private void Steer()
+        {
+            foreach (Wheel wheel in wheels)
+            {
+                if(wheel.Axel == Axel.Rear) continue;
+                
+                float steeringAngle = steerInput * steerSensitivity * maxSteeringAngle;
+                wheel.WheelCollider.steerAngle = Mathf.Lerp(wheel.WheelCollider.steerAngle, steeringAngle, 0.6f);
+            }
+        }
+
+        private void Brake()
+        {
+            if(Input.GetKey(KeyCode.Space))
+            {
+                foreach (Wheel wheel in wheels)
+                {
+                    wheel.WheelCollider.brakeTorque = brakeAcceleration * brakeMultiplier * Time.deltaTime;
+
+                }
+            }
+            else
+            {
+                foreach (Wheel wheel in wheels)
+                {
+                    wheel.WheelCollider.brakeTorque = 0f;
+                }
+            }
+        }
+
+        private void AnimateWheels()
+        {
+            foreach (Wheel wheel in wheels)
+            {
+                wheel.WheelCollider.GetWorldPose(out Vector3 wheelPosition, out Quaternion wheelRotation);
+                wheel.WheelModel.transform.position = wheelPosition;
+                wheel.WheelModel.transform.rotation = wheelRotation;
             }
         }
     }
