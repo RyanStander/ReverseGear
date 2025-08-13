@@ -21,6 +21,8 @@ namespace Car
         
         private float moveInput;
         private float steerInput;
+
+        private bool isInCar = true;
         
         private void OnValidate()
         {
@@ -39,8 +41,11 @@ namespace Car
 
         private void LateUpdate()
         {
-            Move();
             Steer();
+            
+            if (!isInCar)
+                return;
+            Reverse();
             Brake();
         }
 
@@ -50,8 +55,11 @@ namespace Car
             steerInput = Input.GetAxis("Horizontal");
         }
 
-        private void Move()
+        private void Reverse()
         {
+            if (moveInput > 0f)
+                return;
+            
             foreach (Wheel wheel in wheels)
             {
                 wheel.WheelCollider.motorTorque = moveInput * maxAcceleration * speedMultiplier * Time.deltaTime;
