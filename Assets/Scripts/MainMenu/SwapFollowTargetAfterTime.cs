@@ -7,35 +7,32 @@ namespace MainMenu
 {
     public class SwapFollowTargetAfterTime : MonoBehaviour
     {
-        [SerializeField] private Transform[] targets;
+        [SerializeField] private GameObject[] cameras;
         [SerializeField] private float swapInterval = 5f;
-        [SerializeField] private CinemachineVirtualCamera virtualCamera;
         private int currentTargetIndex = 0;
         private float timeStamp;
 
-        private bool hasVirtualCamera;
-        private void OnValidate()
-        {
-            if(virtualCamera == null)
-                virtualCamera = GetComponent<CinemachineVirtualCamera>();
-            
-            if (targets != null && targets.Length != 0)
-                virtualCamera.LookAt = targets[0];
-        }
-
         private void Start()
         {
-            hasVirtualCamera = virtualCamera != null;
             timeStamp = Time.time + swapInterval;
+            if (cameras.Length == 0)
+                return;
+
+            for (int i = 1; i < cameras.Length; i++)
+            {
+                cameras[i].SetActive(false);
+            }
+            
+            cameras[0].SetActive(true);
         }
 
         private void Update()
         {
-            if (targets.Length == 0 && hasVirtualCamera) return;
+            if (cameras.Length == 0) return;
 
-            if (!(Time.time >= timeStamp)) 
+            if (!(Time.time >= timeStamp))
                 return;
-            
+
             SwapTarget();
             timeStamp = Time.time + swapInterval;
         }
@@ -43,10 +40,18 @@ namespace MainMenu
         private void SwapTarget()
         {
             currentTargetIndex++;
-            if (currentTargetIndex >= targets.Length)
+            if (currentTargetIndex >= cameras.Length)
                 currentTargetIndex = 0;
-            
-            virtualCamera.LookAt = targets[currentTargetIndex];
+
+            cameras[currentTargetIndex].SetActive(true);
+
+            for (int i = 0; i < cameras.Length; i++)
+            {
+                if (i != currentTargetIndex)
+                {
+                    cameras[i].SetActive(false);
+                }
+            }
         }
     }
 }
