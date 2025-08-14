@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Car
 {
-    public class CarSounds : MonoBehaviour
+    public class EngineSounds : MonoBehaviour
     {
         [SerializeField] private float maxSpeed;
 

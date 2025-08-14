@@ -6,8 +6,8 @@ namespace Car
 {
     public class CarController : MonoBehaviour
     {
-        [SerializeField] private float maxAcceleration = 30f;
-        [SerializeField] private float speedMultiplier = 500f;
+        [SerializeField] private float maxSpeed = 20f;
+        [SerializeField] private float motorTorque = 2000f;
         [SerializeField] private List<Wheel> wheels;
         
         [SerializeField] private float steerSensitivity = 1f;
@@ -39,7 +39,7 @@ namespace Car
             AnimateWheels();
         }
 
-        private void LateUpdate()
+        private void FixedUpdate()
         {
             Steer();
             
@@ -60,9 +60,18 @@ namespace Car
             if (moveInput > 0f)
                 return;
             
+            float forwardSpeed = Vector3.Dot(transform.forward, carRigidbody.velocity);
+            //normalise the speed factor
+            float speedFactor = Mathf.InverseLerp(0, maxSpeed, Mathf.Abs(forwardSpeed));
+            
+            float currentMotorTorque = Mathf.Lerp(motorTorque, 0, speedFactor);
+            
             foreach (Wheel wheel in wheels)
             {
-                wheel.WheelCollider.motorTorque = moveInput * maxAcceleration * speedMultiplier * Time.deltaTime;
+                // Apply torque to motorized wheels
+                wheel.WheelCollider.motorTorque = moveInput * currentMotorTorque;
+                // Release brakes when accelerating
+                wheel.WheelCollider.brakeTorque = 0f;
             }
         }
 
