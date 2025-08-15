@@ -12,26 +12,26 @@ namespace Car
 
         [SerializeField] private float maxPushSpeed = 1f;
         [SerializeField] private float motorTorquePush = 2000f;
-        
+
         [SerializeField] private float steeringRange = 30f;
         [SerializeField] private float steeringRangeAtMaxSpeed = 10f;
-        
+
         [SerializeField] private float brakeTorque = 2000f;
 
         [SerializeField] private Vector3 centerOfMass;
         [SerializeField] private Rigidbody carRigidbody;
-        
+
         private float moveInput;
         private float steerInput;
         private float speedFactor;
 
-        [SerializeField]private bool isInCar = true;
-        
+        [SerializeField] private bool isInCar = true;
+
         private void OnValidate()
         {
-            if(carRigidbody == null)
+            if (carRigidbody == null)
                 carRigidbody = GetComponent<Rigidbody>();
-            
+
             if (carRigidbody != null)
                 carRigidbody.centerOfMass = centerOfMass;
         }
@@ -48,24 +48,15 @@ namespace Car
             float givenMaxSpeed = isInCar ? maxSpeed : maxPushSpeed;
             //normalise the speed factor
             speedFactor = Mathf.InverseLerp(0, givenMaxSpeed, Mathf.Abs(forwardSpeed));
-            
+
             Steer();
-            
-            
+
             if (!isInCar)
             {
-                MoveCar(maxPushSpeed, motorTorquePush);
-
-                //we dont want it to move backwards
-                if (!(forwardSpeed < 0)) 
-                    return;
-                
-                foreach (Wheel wheel in wheels)
-                    wheel.WheelCollider.brakeTorque = brakeTorque;
-
+                Push(forwardSpeed);
                 return;
             }
-            
+
             Reverse();
             Brake();
         }
@@ -80,16 +71,29 @@ namespace Car
         {
             if (moveInput > 0f)
                 return;
-            
+
             MoveCar(motorTorque, moveInput);
+        }
+
+        private void Push(float forwardSpeed)
+        {
+            MoveCar(maxPushSpeed, motorTorquePush);
+
+            float pushBreakTorque;
+            //car is moving forward
+            if (forwardSpeed < -0.1f)
+                pushBreakTorque = brakeTorque;
+            else
+                pushBreakTorque = 0;
+
+            foreach (Wheel wheel in wheels)
+                wheel.WheelCollider.brakeTorque = pushBreakTorque;
         }
 
         private void MoveCar(float givenMotorTorque, float givenMoveInput = 1)
         {
-            
-            
             float currentMotorTorque = Mathf.Lerp(givenMotorTorque, 0, speedFactor);
-            
+
             foreach (Wheel wheel in wheels)
             {
                 // Apply torque to motorized wheels
@@ -102,11 +106,11 @@ namespace Car
         private void Steer()
         {
             float currentSteerRange = Mathf.Lerp(steeringRange, steeringRangeAtMaxSpeed, speedFactor);
-            
+
             foreach (Wheel wheel in wheels)
             {
-                if(wheel.Axel == Axel.Rear) continue;
-                
+                if (wheel.Axel == Axel.Rear) continue;
+
                 float steeringAngle = steerInput * currentSteerRange;
                 wheel.WheelCollider.steerAngle = Mathf.Lerp(wheel.WheelCollider.steerAngle, steeringAngle, 0.6f);
             }
@@ -114,13 +118,12 @@ namespace Car
 
         private void Brake()
         {
-            if(Input.GetKey(KeyCode.Space))
+            if (Input.GetKey(KeyCode.Space))
             {
                 foreach (Wheel wheel in wheels)
                 {
                     wheel.WheelCollider.motorTorque = 0f;
                     wheel.WheelCollider.brakeTorque = brakeTorque;
-
                 }
             }
             else
