@@ -56,6 +56,11 @@ namespace Enemies
             EventManager.currentManager.Unsubscribe(EventType.PlayerCaught, OnPlayerCaught);
         }
 
+        private void Start()
+        {
+            agent.speed = moveSpeed;
+        }
+
         private void Update()
         {
             if(disableFunctionality)

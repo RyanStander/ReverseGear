@@ -20,6 +20,11 @@ namespace Car
 
         [SerializeField] private Vector3 centerOfMass;
         [SerializeField] private Rigidbody carRigidbody;
+        
+        [SerializeField] private GameObject steeringWheel;
+        [SerializeField] private float maxSteeringWheelRotation = 540f; // 1.5 turns either way
+        [SerializeField] private float steeringWheelReturnSpeed = 5f;   // how quickly it returns
+        private float steeringWheelCurrentAngle;
 
         private float moveInput;
         private float steerInput;
@@ -114,6 +119,18 @@ namespace Car
                 float steeringAngle = steerInput * currentSteerRange;
                 wheel.WheelCollider.steerAngle = Mathf.Lerp(wheel.WheelCollider.steerAngle, steeringAngle, 0.6f);
             }
+            
+            AnimateSteeringWheel();
+        }
+        
+        private void AnimateSteeringWheel()
+        {
+            float targetAngle = steerInput * maxSteeringWheelRotation * 0.5f;
+            
+            steeringWheelCurrentAngle = Mathf.Lerp(steeringWheelCurrentAngle, targetAngle, Time.deltaTime * steeringWheelReturnSpeed);
+            
+            if (steeringWheel != null)
+                steeringWheel.transform.localRotation = Quaternion.Euler(0f, 0f, -steeringWheelCurrentAngle);
         }
 
         private void Brake()
