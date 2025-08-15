@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Events;
 using UnityEngine;
 using UnityEngine.AI;
+using EventType = Events.EventType;
 using Random = UnityEngine.Random;
 
 namespace Enemies
@@ -25,6 +26,8 @@ namespace Enemies
         private Coroutine catchUpCoroutine;
         private float currentSpeed;
 
+        private bool disableFunctionality;
+
         private void OnValidate()
         {
             if (agent == null)
@@ -43,14 +46,26 @@ namespace Enemies
                 audioSource = GetComponent<AudioSource>();
         }
 
+        private void OnEnable()
+        {
+            EventManager.currentManager.Subscribe(EventType.PlayerCaught, OnPlayerCaught);
+        }
+        
+        private void OnDisable()
+        {
+            EventManager.currentManager.Unsubscribe(EventType.PlayerCaught, OnPlayerCaught);
+        }
+
         private void Update()
         {
+            if(disableFunctionality)
+                return;
+            
             float distance = Vector3.Distance(transform.position, target.position);
 
             if (distance < stopDistance)
             {
                 EventManager.currentManager.AddEvent(new PlayerCaughtEvent());
-                enabled = false;
                 return;
             }
 
@@ -118,6 +133,16 @@ namespace Enemies
                 monsterAnimation.Play();
                 nextPoseChangeTime = Time.time + poseInterval;
             }
+        }
+        
+        private void OnPlayerCaught(EventData eventData)
+        {
+            if (!eventData.IsEventOfType(out PlayerCaughtEvent caughtEvent)) return;
+
+            disableFunctionality = true;
+            agent.ResetPath();
+            audioSource.Stop();
+            gameObject.SetActive(false);
         }
     }
 }
