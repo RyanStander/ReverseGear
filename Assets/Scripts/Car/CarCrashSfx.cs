@@ -22,7 +22,7 @@ namespace Car
         {
             bool isHardCrash = carRigidBody.velocity.magnitude > hardCrashSpeed;
 
-            if(other.gameObject.tag== "Monster")
+            if(other.gameObject.CompareTag("Monster"))
                 return;
             
             if (isHardCrash)

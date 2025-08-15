@@ -9,20 +9,23 @@ namespace Car
         [SerializeField] private float maxSpeed = 20f;
         [SerializeField] private float motorTorque = 2000f;
         [SerializeField] private List<Wheel> wheels;
-        
-        [SerializeField] private float steerSensitivity = 1f;
-        [SerializeField] private float maxSteeringAngle = 30f;
 
-        [SerializeField] private float brakeAcceleration = 50f;
-        [SerializeField] private float brakeMultiplier = 300;
+        [SerializeField] private float maxPushSpeed = 1f;
+        [SerializeField] private float motorTorquePush = 2000f;
+        
+        [SerializeField] private float steeringRange = 30f;
+        [SerializeField] private float steeringRangeAtMaxSpeed = 10f;
+        
+        [SerializeField] private float brakeTorque = 2000f;
 
         [SerializeField] private Vector3 centerOfMass;
         [SerializeField] private Rigidbody carRigidbody;
         
         private float moveInput;
         private float steerInput;
+        private float speedFactor;
 
-        private bool isInCar = true;
+        [SerializeField]private bool isInCar = true;
         
         private void OnValidate()
         {
@@ -41,10 +44,28 @@ namespace Car
 
         private void FixedUpdate()
         {
+            float forwardSpeed = Vector3.Dot(transform.forward, carRigidbody.velocity);
+            float givenMaxSpeed = isInCar ? maxSpeed : maxPushSpeed;
+            //normalise the speed factor
+            speedFactor = Mathf.InverseLerp(0, givenMaxSpeed, Mathf.Abs(forwardSpeed));
+            
             Steer();
             
+            
             if (!isInCar)
+            {
+                MoveCar(maxPushSpeed, motorTorquePush);
+
+                //we dont want it to move backwards
+                if (!(forwardSpeed < 0)) 
+                    return;
+                
+                foreach (Wheel wheel in wheels)
+                    wheel.WheelCollider.brakeTorque = brakeTorque;
+
                 return;
+            }
+            
             Reverse();
             Brake();
         }
@@ -60,16 +81,19 @@ namespace Car
             if (moveInput > 0f)
                 return;
             
-            float forwardSpeed = Vector3.Dot(transform.forward, carRigidbody.velocity);
-            //normalise the speed factor
-            float speedFactor = Mathf.InverseLerp(0, maxSpeed, Mathf.Abs(forwardSpeed));
+            MoveCar(motorTorque, moveInput);
+        }
+
+        private void MoveCar(float givenMotorTorque, float givenMoveInput = 1)
+        {
             
-            float currentMotorTorque = Mathf.Lerp(motorTorque, 0, speedFactor);
+            
+            float currentMotorTorque = Mathf.Lerp(givenMotorTorque, 0, speedFactor);
             
             foreach (Wheel wheel in wheels)
             {
                 // Apply torque to motorized wheels
-                wheel.WheelCollider.motorTorque = moveInput * currentMotorTorque;
+                wheel.WheelCollider.motorTorque = givenMoveInput * currentMotorTorque;
                 // Release brakes when accelerating
                 wheel.WheelCollider.brakeTorque = 0f;
             }
@@ -77,11 +101,13 @@ namespace Car
 
         private void Steer()
         {
+            float currentSteerRange = Mathf.Lerp(steeringRange, steeringRangeAtMaxSpeed, speedFactor);
+            
             foreach (Wheel wheel in wheels)
             {
                 if(wheel.Axel == Axel.Rear) continue;
                 
-                float steeringAngle = steerInput * steerSensitivity * maxSteeringAngle;
+                float steeringAngle = steerInput * currentSteerRange;
                 wheel.WheelCollider.steerAngle = Mathf.Lerp(wheel.WheelCollider.steerAngle, steeringAngle, 0.6f);
             }
         }
@@ -92,7 +118,8 @@ namespace Car
             {
                 foreach (Wheel wheel in wheels)
                 {
-                    wheel.WheelCollider.brakeTorque = brakeAcceleration * brakeMultiplier * Time.deltaTime;
+                    wheel.WheelCollider.motorTorque = 0f;
+                    wheel.WheelCollider.brakeTorque = brakeTorque;
 
                 }
             }
@@ -113,6 +140,11 @@ namespace Car
                 wheel.WheelModel.transform.position = wheelPosition;
                 wheel.WheelModel.transform.rotation = wheelRotation;
             }
+        }
+
+        public void SetControlActive(bool active)
+        {
+            isInCar = active;
         }
     }
 }
