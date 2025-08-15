@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Events;
 using UnityEngine;
@@ -13,14 +14,16 @@ namespace Enemies
         [SerializeField] private float stopDistance = 2f;
         [SerializeField] private float activeDistance = 25f;
         [SerializeField] private float moveSpeed = 2f;
+        [SerializeField] private float catchUpSpeedBonus = 1;
         [SerializeField] private List<AnimationClip> idlePoses;
         [SerializeField] private Animation monsterAnimation;
         [SerializeField] private NavMeshAgent agent;
         [SerializeField] private AudioSource audioSource;
-
-        private bool isVisibleToPlayer = false;
         private float nextPoseChangeTime = 0f;
         private float poseInterval = 0.5f;
+
+        private Coroutine catchUpCoroutine;
+        private float currentSpeed;
 
         private void OnValidate()
         {
@@ -51,14 +54,37 @@ namespace Enemies
                 return;
             }
 
-            Vector3 directionToPlayer = (target.position - transform.position).normalized;
-            float dot = Vector3.Dot(target.forward, directionToPlayer);
-            isVisibleToPlayer = dot < 0;
+            if (distance > activeDistance)
+            {
+                catchUpCoroutine ??= StartCoroutine(CatchUp());
+            }
+            else
+            {
+                if (catchUpCoroutine != null)
+                {
+                    StopCoroutine(catchUpCoroutine);
+                    catchUpCoroutine = null;
+                    currentSpeed = moveSpeed;
+                    agent.speed = currentSpeed;
+                }
+            }
 
-            if (!isVisibleToPlayer)
+            if (!IsVisibleToPlayer())
                 TryChangePose();
 
-            if (distance > activeDistance || !isVisibleToPlayer)
+            Move(distance);
+        }
+
+        private bool IsVisibleToPlayer()
+        {
+            Vector3 directionToPlayer = (target.position - transform.position).normalized;
+            float dot = Vector3.Dot(target.forward, directionToPlayer);
+            return dot < 0;
+        }
+
+        private void Move(float distance)
+        {
+            if (distance > activeDistance || !IsVisibleToPlayer())
             {
                 agent.SetDestination(target.position);
                 if (!audioSource.isPlaying)
@@ -68,6 +94,18 @@ namespace Enemies
             {
                 agent.ResetPath();
                 audioSource.Stop();
+            }
+        }
+
+        private IEnumerator CatchUp()
+        {
+            while (true)
+            {
+                if (currentSpeed <= activeDistance/2)
+                    currentSpeed = Mathf.Lerp(currentSpeed, currentSpeed + catchUpSpeedBonus, Time.deltaTime);
+                currentSpeed = Mathf.Clamp(currentSpeed, moveSpeed, activeDistance/2);
+                agent.speed = currentSpeed;
+                yield return null;
             }
         }
 

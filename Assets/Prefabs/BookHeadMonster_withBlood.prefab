@@ -3151,7 +3151,7 @@ Animation:
   - {fileID: -203655887218126122, guid: 9186481ab2e780b4f859d4513e9db55e, type: 3}
   - {fileID: -203655887218126122, guid: a784f689946799b4a87557a25544f8e3, type: 3}
   m_WrapMode: 0
-  m_PlayAutomatically: 0
+  m_PlayAutomatically: 1
   m_AnimatePhysics: 0
   m_CullingType: 0
 --- !u!114 &2367902640728719979
@@ -3169,7 +3169,8 @@ MonoBehaviour:
   target: {fileID: 0}
   stopDistance: 2
   activeDistance: 25
-  moveSpeed: 2
+  moveSpeed: 6
+  catchUpSpeedBonus: 1
   idlePoses:
   - {fileID: -203655887218126122, guid: c2d85d055fa26f24d896f799779a332b, type: 3}
   - {fileID: -203655887218126122, guid: 500bf5b8c50cf0e48ae5c316ad7a64aa, type: 3}
