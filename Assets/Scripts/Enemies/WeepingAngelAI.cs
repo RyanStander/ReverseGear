@@ -36,7 +36,7 @@ namespace Enemies
                 agent.speed = moveSpeed;
             }
 
-            if (target == null)
+            if (target == null && Camera.main != null)
                 target = Camera.main.transform;
 
             if (monsterAnimation == null)
@@ -50,7 +50,7 @@ namespace Enemies
         {
             EventManager.currentManager.Subscribe(EventType.PlayerCaught, OnPlayerCaught);
         }
-        
+
         private void OnDisable()
         {
             EventManager.currentManager.Unsubscribe(EventType.PlayerCaught, OnPlayerCaught);
@@ -63,9 +63,9 @@ namespace Enemies
 
         private void Update()
         {
-            if(disableFunctionality)
+            if (disableFunctionality)
                 return;
-            
+
             float distance = Vector3.Distance(transform.position, target.position);
 
             if (distance < stopDistance)
@@ -121,9 +121,9 @@ namespace Enemies
         {
             while (true)
             {
-                if (currentSpeed <= activeDistance/2)
+                if (currentSpeed <= activeDistance / 2)
                     currentSpeed = Mathf.Lerp(currentSpeed, currentSpeed + catchUpSpeedBonus, Time.deltaTime);
-                currentSpeed = Mathf.Clamp(currentSpeed, moveSpeed, activeDistance/2);
+                currentSpeed = Mathf.Clamp(currentSpeed, moveSpeed, activeDistance / 2);
                 agent.speed = currentSpeed;
                 yield return null;
             }
@@ -139,7 +139,7 @@ namespace Enemies
                 nextPoseChangeTime = Time.time + poseInterval;
             }
         }
-        
+
         private void OnPlayerCaught(EventData eventData)
         {
             if (!eventData.IsEventOfType(out PlayerCaughtEvent caughtEvent)) return;

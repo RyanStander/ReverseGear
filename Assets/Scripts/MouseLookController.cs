@@ -31,8 +31,8 @@ public class MouseLookController : MonoBehaviour
     private bool isPushMode = false;
     private float yaw;
     private float pitch;
-    private CinemachineTrackedDolly interiorHeadDolly;
-    private CinemachineTrackedDolly exteriorHeadDolly;
+    [SerializeField] private CinemachineTrackedDolly interiorHeadDolly;
+    [SerializeField] private CinemachineTrackedDolly exteriorHeadDolly;
 
 
     private Transform currentTarget;
@@ -42,7 +42,7 @@ public class MouseLookController : MonoBehaviour
         if (carLookTarget != null)
             interiorHeadDolly = carLookTarget.GetComponent<CinemachineVirtualCamera>()
                 .GetCinemachineComponent<CinemachineTrackedDolly>();
-        
+
         if (pushLookTarget != null)
             exteriorHeadDolly = pushLookTarget.GetComponent<CinemachineVirtualCamera>()
                 .GetCinemachineComponent<CinemachineTrackedDolly>();
@@ -53,11 +53,6 @@ public class MouseLookController : MonoBehaviour
         EventManager.currentManager.Subscribe(EventType.ToggleCamera, OnToggleCamera);
         EventManager.currentManager.Subscribe(EventType.PlayerWin, OnGameEnd);
         EventManager.currentManager.Subscribe(EventType.PlayerCaught, OnGameEnd);
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        // Default mode is inside car
-        currentTarget = carLookTarget;
     }
 
     private void OnDisable()
@@ -65,6 +60,15 @@ public class MouseLookController : MonoBehaviour
         EventManager.currentManager.Unsubscribe(EventType.ToggleCamera, OnToggleCamera);
         EventManager.currentManager.Unsubscribe(EventType.PlayerWin, OnGameEnd);
         EventManager.currentManager.Unsubscribe(EventType.PlayerCaught, OnGameEnd);
+    }
+
+    private void Start()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        // Default mode is inside car
+        currentTarget = carLookTarget;
     }
 
     private void Update()
@@ -84,7 +88,7 @@ public class MouseLookController : MonoBehaviour
         {
             yaw = Mathf.Clamp(yaw, -pushYawLimit, pushYawLimit);
             pitch = Mathf.Clamp(pitch, pushPitchMin, pushPitchMax);
-            
+
             float normalized = (yaw - -pushYawLimit) / (pushYawLimit - -pushYawLimit);
             float progress = normalized * (dollyPointCount - 1);
             exteriorHeadDolly.m_PathPosition = progress;
